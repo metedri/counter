@@ -1,30 +1,64 @@
-import React, { useState } from 'react';
+import React, { ChangeEvent, useEffect, useState } from 'react';
 import { Button } from './components/Button';
-import { CounterModule } from './components/counterModule/CounterModule';
 import styled from 'styled-components';
 import { theme } from './styles/Theme';
 
 function App() {
-  // const maxCount = 5;
-  // const minCount = 0;
-  const [maxCount, setMaxCount] = useState(5)
-  const [minCount, setMinCount] = useState(0)
-  const [count, setCount] = useState(minCount)
+  const [count, setCount] = useState(0)
+  const [minValue, setMinValue] = useState(0)
+  const [maxValue, setMaxValue] = useState(5)
+  const [error, setError] = useState('')
 
-  const increaseCounter = () => {
-    if (minCount <= count && count < maxCount) {
+
+  useEffect(() => {
+    let minValueAsString = localStorage.getItem('minValue')
+    if (minValueAsString) {
+      setMinValue(JSON.parse(minValueAsString))
+    }
+    let maxValueAsString = localStorage.getItem('maxValue')
+    if (maxValueAsString) {
+      setMaxValue(JSON.parse(maxValueAsString))
+    }
+    let countAsString = localStorage.getItem('count')
+    if (countAsString) {
+      setCount(JSON.parse(countAsString))
+    }
+  }, [])
+
+  useEffect(() => {
+    localStorage.setItem('minValue', JSON.stringify(minValue))
+    localStorage.setItem('maxValue', JSON.stringify(maxValue))
+    localStorage.setItem('count', JSON.stringify(count))
+  }, [minValue, maxValue, count])
+
+
+  const incCounterHandler = () => {
+    if (count < maxValue){
       setCount(count + 1)
     }
   }
 
-  const resetCounter = () => {
-    setCount(minCount)
+  const resetCounterHandler = () => {
+    setCount(minValue)
   }
 
-  const setValue = () =>{
-    // setMaxCount(maxCount)
-    // setMinCount(minCount)
+  const setCounterHandler = () => {
+    if(minValue >= 0 && minValue < maxValue) {
+      setCount(minValue)
+      setError('')
+    } else {
+      setError('Incorrect value!')
+    }
   }
+
+  const onChangeMaxValue = (e: ChangeEvent<HTMLInputElement>) =>{
+    setMaxValue(Number(e.currentTarget.value)) 
+  }
+
+  const onChangeMinValue = (e: ChangeEvent<HTMLInputElement>) =>{
+    setMinValue(Number(e.currentTarget.value))
+  }
+
 
   return (
     <div >
@@ -32,28 +66,27 @@ function App() {
         <Display>
           <div>
             <span>max value: </span>
-            <input value={maxCount} onChange={e => {setMaxCount(+e.currentTarget.value)}} type="number" />
+            <input value={maxValue} onChange={onChangeMaxValue} type="number" />
           </div>
           <div>
             <span>start value: </span>
-            <input value={minCount} onChange={e => {setMinCount(+e.currentTarget.value)}} type="number" />
+            <input value={minValue} onChange={onChangeMinValue} type="number" />
           </div>
         </Display>
         <ButtonsBar>
-          <Button onClick={setValue}>set</Button>
+          <Button onClick={setCounterHandler}>set</Button>
         </ButtonsBar>
       </Module>
 
       <Module>
         <Display>
-          <Count color={count === maxCount ? 'red' : ''}>{count}</Count>
+          {error? <ErrorSpan>{error}</ErrorSpan>: <Count color={count === maxValue ? 'red' : ''}>{count}</Count>}
         </Display>
         <ButtonsBar>
-          <Button onClick={increaseCounter} disabled={count === maxCount}>inc</Button>
-          <Button onClick={resetCounter} disabled={count === minCount}>reset</Button>
+          <Button onClick={incCounterHandler} disabled={count === maxValue}>inc</Button>
+          <Button onClick={resetCounterHandler}>reset</Button>
         </ButtonsBar>
       </Module>
-      {/* <CounterModule/> */}
     </div>
   );
 }
@@ -82,6 +115,7 @@ const Display = styled.div`
     min-height: 200px;
     border: 3px solid ${theme.colors.secondary};
     border-radius: 10px;
+    color: ${theme.colors.secondary};
 `
 
 const Count = styled.span`
@@ -97,4 +131,11 @@ const ButtonsBar = styled.div`
     justify-content: space-around;
     border: 3px solid ${theme.colors.secondary};
     border-radius: 10px;
+`
+
+const ErrorSpan = styled.div`
+  font-size: 36px;
+  font-weight: bold;
+  color: red;
+
 `
